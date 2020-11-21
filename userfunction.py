@@ -73,7 +73,6 @@ def signUp(email, username, password, birthdate, bio, date, url):
         else:
             return False
         
-        
 def modifyAccount(email, username, password, birthdate, bio, url, user_id):
     conn = None
     cursor = None
@@ -122,8 +121,7 @@ def modifyAccount(email, username, password, birthdate, bio, url, user_id):
             return True
         else:
             return False
-        
-        
+          
 def deleteAccount(user_id):
     conn = None
     cursor = None
@@ -190,7 +188,6 @@ def login(username, password):
         if row == 1:
             users["loginToken"] = token
             return users    
-
 
 def logout(token):
     conn = None

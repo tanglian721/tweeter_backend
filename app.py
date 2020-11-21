@@ -6,6 +6,7 @@ from datetime import datetime
 from flask_cors import CORS
 import userfunction
 import followfunction
+import tweetfunction
 
 app = Flask(__name__)
 CORS(app)
@@ -104,10 +105,50 @@ def followers():
         else:
             return Response("Something went wrong!", mimetype="text/html", status=500)
         
-@app.route('/users', methods=['GET', 'POST', 'PATCH', 'DELETE'])
+@app.route('/tweets', methods=['GET', 'POST', 'PATCH', 'DELETE'])
 def tweets():
     if request.method == "GET": 
         user_id = request.args.get('userId')
+        tweets = tweetfunction.getTweet(user_id)
+        print(user_id)
+        if tweets != None:
+            return Response(json.dumps(tweets, default=str), mimetype="application/json", status=200)
+        else:
+            return Response("Something went wrong!", mimetype="text/html", status=500)
+    elif request.method == "POST":
+        token = request.json.get('loginToken')
+        content = request.json.get('content')
+        image = request.json.get('image')
+        tweet = tweetfunction.postTweet(token, content, image)
+        if tweet != None:
+            return Response(json.dumps(tweet, default=str), mimetype="application/json", status=201)
+        else:
+            return Response("Something went wrong!", mimetype="text/html", status=500)
+    elif request.method == "PATCH":
+        token = request.json.get('loginToken')
+        content = request.json.get('content')
+        image = request.json.get('image')
+        tweet_id = request.json.get('tweetId')
+        tweet = tweetfunction.editTweet(token, content, image, tweet_id)
+        if tweet != None:
+            return Response(json.dumps(tweet, default=str), mimetype="application/json", status=200)
+        else:
+            return Response("Something went wrong!", mimetype="text/html", status=500)
+    elif request.method == "DELETE":
+        token = request.json.get('loginToken')
+        tweet_id = request.json.get('tweetId')
+        if tweetfunction.deleteTweet(token, tweet_id):
+            return Response("Delete Succsess!", mimetype="text/html", status=204)
+        else:
+            return Response("Something went wrong!", mimetype="text/html", status=500)
+            
+        
+        
+        
+        
+            
+        
+    
         
     
         
