@@ -7,6 +7,7 @@ from flask_cors import CORS
 import userfunction
 import followfunction
 import tweetfunction
+import like
 
 app = Flask(__name__)
 CORS(app)
@@ -142,9 +143,32 @@ def tweets():
         else:
             return Response("Something went wrong!", mimetype="text/html", status=500)
             
-        
-        
-        
+@app.route('/likes', methods=['GET', 'POST', 'DELETE'])
+def tweet_likes():
+    if request.method == "GET":
+        tweet_id = request.args.get('tweetId')
+        tweet_likes = like.getTweetLikes(tweet_id)
+        if tweet_likes != None:
+            return Response(json.dumps(tweet_likes, default=str), mimetype="application/json", status=200)
+        else:
+            return Response("Something went wrong!", mimetype="text/html", status=500)
+    elif request.method == "POST":
+        token = request.json.get('loginToken')
+        tweet_id = request.json.get('tweetId')
+        if like.postTweetLike(token, tweet_id):
+            return Response("Likes Succsess!", mimetype="text/html", status=201)
+        else:
+            return Response("Something went wrong!", mimetype="text/html", status=500)
+    elif request.method == "DELETE":
+        token = request.json.get('loginToken')
+        tweet_id = request.json.get('tweetId')
+        if like.deleteTweetLike(token, tweet_id):
+            return Response("Delete Succsess!", mimetype="text/html", status=204)
+        else:
+            return Response("Something went wrong!", mimetype="text/html", status=500)
+     
+
+
         
             
         
