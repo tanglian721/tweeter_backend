@@ -9,6 +9,7 @@ import followfunction
 import tweetfunction
 import like
 import commentsfunction
+import hashA
 
 app = Flask(__name__)
 CORS(app)
@@ -228,6 +229,41 @@ def comment_likes():
             return Response("Delete Succsess!", mimetype="text/html", status=204)
         else:
             return Response("Something went wrong!", mimetype="text/html", status=500)
+
+
+@app.route('/@', methods=['GET', 'POST', 'DELETE'])
+def Auser():    
+    if request.method == "GET":
+        user_id = request.args.get('userId')
+        tweets = hashA.getTweets(user_id)
+        if tweets != None:
+            return Response(json.dumps(tweets, default=str), mimetype="application/json", status=200)
+        else:
+            return Response("Something went wrong!", mimetype="text/html", status=500)
+    elif request.method == "POST":
+        token = request.json.get('loginToken')
+        tweet_id = request.json.get('tweetId')
+        print(tweet_id)
+        if hashA.postAuser(token, tweet_id):
+            return Response("@ Succsess!", mimetype="text/html", status=201)
+        else:
+            return Response("Something went wrong!", mimetype="text/html", status=500)
+    elif request.method == "DELETE":
+        token = request.json.get('loginToken')
+        tweet_id = request.json.get('tweetId')
+        if hashA.deleteAuser(token, tweet_id):
+            return Response("Delete Succsess!", mimetype="text/html", status=204)
+        else:
+            return Response("Something went wrong!", mimetype="text/html", status=500)
+        
+# @app.route('/hash', methods=['GET', 'POST','DELETE'])
+#     if request.method == "GET":
+#         hash = request.args.get('hash')
+#         comment_likes = like.getCommentLikes(comment_id)
+#         if comment_likes != None:
+#             return Response(json.dumps(comment_likes, default=str), mimetype="application/json", status=200)
+#         else:
+#             return Response("Something went wrong!", mimetype="text/html", status=500)
      
 
 

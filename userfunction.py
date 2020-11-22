@@ -1,7 +1,13 @@
 import mariadb
 import dbcreds
 import random
+import string
 from datetime import datetime
+
+def get_random_alphanumeric_string(length):
+    letters_and_digits = string.ascii_letters + string.digits
+    result_str = ''.join((random.choice(letters_and_digits) for i in range(length)))
+    return result_str
 
 
 
@@ -166,7 +172,7 @@ def login(username, password):
         users = dict(zip(headers,user))    
         print(users)
         if users != {}:
-            token = random.randint(1,10000000000)
+            token = get_random_alphanumeric_string(20)
             date = str(datetime.now())[0:10]
             cursor.execute("INSERT INTO token(token, user_id, date) VALUES (?, ?, ?)", [token, users.get("id"), date])
             conn.commit()
