@@ -84,7 +84,6 @@ def deleteTweetLike(token, tweet_id):
         if user_id != None:
             cursor.execute("DELETE FROM tweet_like WHERE tweet_id=? AND user_id=?", [tweet_id, user_id])
             conn.commit()
-            print("1")            
             cursor.execute("SELECT COUNT(*) FROM tweet_like tl WHERE tl.tweet_id=?", [tweet_id,])
             amount = cursor.fetchone()[0]
             print(amount)

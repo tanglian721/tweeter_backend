@@ -8,6 +8,7 @@ import userfunction
 import followfunction
 import tweetfunction
 import like
+import commentsfunction
 
 app = Flask(__name__)
 CORS(app)
@@ -163,6 +164,43 @@ def tweet_likes():
         token = request.json.get('loginToken')
         tweet_id = request.json.get('tweetId')
         if like.deleteTweetLike(token, tweet_id):
+            return Response("Delete Succsess!", mimetype="text/html", status=204)
+        else:
+            return Response("Something went wrong!", mimetype="text/html", status=500)
+        
+@app.route('/comments', methods=['GET', 'POST', 'PATCH', 'DELETE'])
+def comments():
+    if request.method == "GET": 
+        tweet_id = request.args.get('tweetId')
+        comments = commentsfunction.getComment(tweet_id)
+        if tweets != None:
+            return Response(json.dumps(comments, default=str), mimetype="application/json", status=200)
+        else:
+            return Response("Something went wrong!", mimetype="text/html", status=500)
+    elif request.method == "POST":
+        token = request.json.get('loginToken')
+        content = request.json.get('content')
+        image = request.json.get('image')
+        tweet_id = request.json.get('tweetId')
+        comments = commentsfunction.postComment(token, tweet_id, content, image)
+        if comments != None:
+            return Response(json.dumps(comments, default=str), mimetype="application/json", status=201)
+        else:
+            return Response("Something went wrong!", mimetype="text/html", status=500)
+    elif request.method == "PATCH":
+        token = request.json.get('loginToken')
+        content = request.json.get('content')
+        image = request.json.get('image')
+        comment_id = request.json.get('commentId')
+        comments = commentsfunction.editComment(token, comment_id, content, image)
+        if comments != None:
+            return Response(json.dumps(comments, default=str), mimetype="application/json", status=200)
+        else:
+            return Response("Something went wrong!", mimetype="text/html", status=500)
+    elif request.method == "DELETE":
+        token = request.json.get('loginToken')
+        comment_id = request.json.get('commentId')
+        if commentsfunction.deleteComment(token, comment_id):
             return Response("Delete Succsess!", mimetype="text/html", status=204)
         else:
             return Response("Something went wrong!", mimetype="text/html", status=500)
