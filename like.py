@@ -218,3 +218,98 @@ def deleteCommentLike(token, comment_id):
             return True
         else:
             return False
+        
+def getCom_commentLikes(com_comment_id):
+    conn = None
+    cursor = None
+    try:
+        conn = mariadb.connect(user=dbcreds.user, password=dbcreds.password, host=dbcreds.host, port=dbcreds.port, database=dbcreds.database)
+        cursor = conn.cursor()
+        cursor.execute("SELECT ccl.com_comment_id ,ccl.user_id ,u.username FROM users u INNER JOIN com_comment_like ccl ON u.id = ccl.user_id WHERE ccl.com_comment_id=?", [com_comment_id])
+        rows = cursor.fetchall()
+        likes = []
+        headers = [ i[0] for i in cursor.description]
+        for row in rows:
+            likes.append(dict(zip(headers,row)))   
+    except mariadb.ProgrammingError:
+        print("program error...")
+    except mariadb.DataError:
+        print("Data error...")
+    except mariadb.DatabaseError:
+        print("Database error...")
+    except mariadb.OperationalError:
+        print("connect error...")
+    finally:
+        if(cursor != None):
+            cursor.close()
+        if(conn != None):
+            conn.rollback()
+            conn.close()
+        return likes
+    
+def postCom_commentLike(token, com_comment_id):
+    conn = None
+    cursor = None
+    row = None
+    user_id = None
+    amount = None
+    try:
+        conn = mariadb.connect(user=dbcreds.user, password=dbcreds.password, host=dbcreds.host, port=dbcreds.port, database=dbcreds.database)
+        cursor = conn.cursor()
+        cursor.execute("SELECT user_id FROM token WHERE token=?", [token,])
+        user_id = cursor.fetchone()[0]
+        if user_id != None:
+            cursor.execute("INSERT INTO com_comment_like(com_comment_id, user_id) VALUES (?,?)", [com_comment_id, user_id])
+            conn.commit()
+            row = cursor.rowcount                 
+    except mariadb.ProgrammingError:
+        print("program error...")
+    except mariadb.DataError:
+        print("Data error...")
+    except mariadb.DatabaseError:
+        print("Database error...")
+    except mariadb.OperationalError:
+        print("connect error...")
+    finally:
+        if(cursor != None):
+            cursor.close()
+        if(conn != None):
+            conn.rollback()
+            conn.close()
+        if row == 1:
+            return True
+        else:
+            return False
+        
+def deleteCom_commentLike(token, com_comment_id):
+    conn = None
+    cursor = None
+    row = None
+    user_id = None
+    try:
+        conn = mariadb.connect(user=dbcreds.user, password=dbcreds.password, host=dbcreds.host, port=dbcreds.port, database=dbcreds.database)
+        cursor = conn.cursor()
+        cursor.execute("SELECT user_id FROM token WHERE token=?", [token,])
+        user_id = cursor.fetchone()[0]
+        if user_id != None:
+            cursor.execute("DELETE FROM com_comment_like WHERE com_comment_id=? AND user_id=?", [com_comment_id, user_id])
+            conn.commit()
+            row = cursor.rowcount                 
+    except mariadb.ProgrammingError:
+        print("program error...")
+    except mariadb.DataError:
+        print("Data error...")
+    except mariadb.DatabaseError:
+        print("Database error...")
+    except mariadb.OperationalError:
+        print("connect error...")
+    finally:
+        if(cursor != None):
+            cursor.close()
+        if(conn != None):
+            conn.rollback()
+            conn.close()
+        if row == 1:
+            return True
+        else:
+            return False

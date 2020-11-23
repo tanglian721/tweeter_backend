@@ -265,6 +265,30 @@ def comment_likes():
             return Response("Delete Succsess!", mimetype="text/html", status=204)
         else:
             return Response("Something went wrong!", mimetype="text/html", status=500)
+        
+@app.route('/com-comment-likes', methods=['GET', 'POST', 'DELETE'])
+def com_comment_likes():
+    if request.method == "GET":
+        com_comment_id = request.args.get('com_commentId')
+        com_comment_likes = like.getCom_commentLikes(com_comment_id)
+        if com_comment_likes != None:
+            return Response(json.dumps(com_comment_likes, default=str), mimetype="application/json", status=200)
+        else:
+            return Response("Something went wrong!", mimetype="text/html", status=500)
+    elif request.method == "POST":
+        token = request.json.get('loginToken')
+        com_comment_id = request.json.get('com_commentId')
+        if like.postCom_commentLike(token, com_comment_id):
+            return Response("Likes Succsess!", mimetype="text/html", status=201)
+        else:
+            return Response("Something went wrong!", mimetype="text/html", status=500)
+    elif request.method == "DELETE":
+        token = request.json.get('loginToken')
+        com_comment_id = request.json.get('com_commentId')
+        if like.deleteCom_commentLike(token, com_comment_id):
+            return Response("Delete Succsess!", mimetype="text/html", status=204)
+        else:
+            return Response("Something went wrong!", mimetype="text/html", status=500)
 
 @app.route('/@', methods=['GET', 'POST', 'DELETE'])
 def Auser():    

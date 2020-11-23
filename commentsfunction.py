@@ -271,13 +271,11 @@ def deleteCom_comment(token, com_comment_id):
         cursor.execute("SELECT user_id FROM token WHERE token=?", [token,])
         user_id = cursor.fetchone()[0]
         if user_id != None:
-            print(user_id)
-            print(com_comment_id)
             cursor.execute("SELECT comment_id FROM com_comment WHERE id = ?", [com_comment_id,])
             comment_id = cursor.fetchone()[0]
-            print(comment_id)
             cursor.execute("DELETE FROM com_comment WHERE user_id=? AND id=?", [user_id, com_comment_id])
             conn.commit()
+            print("1")
             cursor.execute("SELECT COUNT(*) FROM com_comment cc WHERE cc.comment_id=?", [comment_id,])
             amount = cursor.fetchone()[0]
             print(amount)
