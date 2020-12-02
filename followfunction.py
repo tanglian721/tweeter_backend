@@ -34,10 +34,12 @@ def getFollowers(user_id):
     try:
         conn = mariadb.connect(user=dbcreds.user, password=dbcreds.password, host=dbcreds.host, port=dbcreds.port, database=dbcreds.database)
         cursor = conn.cursor()
+        print(user_id)
         cursor.execute("SELECT uf.user_id , u.email ,u.username , u.bio ,u.birthdate ,u.url FROM users u INNER JOIN user_follows uf ON u.id = uf.user_id WHERE uf.following_id=?", [user_id])
         rows = cursor.fetchall()
         users = []
         headers = [ i[0] for i in cursor.description]
+        headers[0] = "following_id"
         for row in rows:
             users.append(dict(zip(headers,row)))   
     except mariadb.ProgrammingError:

@@ -1,4 +1,4 @@
-from flask import Flask, request, Response
+from flask import Flask, request, Response,render_template
 import mariadb
 import json
 import random
@@ -11,12 +11,33 @@ import like
 import commentsfunction
 import hashA
 import messagefunction
+import noticefunction
+import os
+
 
 app = Flask(__name__)
 CORS(app)
+APP_ROOT = os.path.dirname(os.path.abspath(__file__))
+
+@app.route('/api/upload', methods=["POST"])
+def upload():
+    target = os.path.join(APP_ROOT, '/Users/Taylo/InnoTech/Assignments/Project/tweet_fullStack/frondend/src/assets/')
+    
+    if not os.path.isdir(target):
+        os.mkdir(target)
+    files = request.files.getlist("file")
+    for file in request.files.getlist("file"):
+        print(file)
+        filename = file.filename
+        destination = "/".join([target, filename])
+        print(destination)
+        file.save(destination)
+    return Response(json.dumps(destination, default=str), mimetype="application/json", status=204)
+if __name__=="__main__":
+    app.run(port=4555,debug=True)
 
 
-@app.route('/login', methods=['POST', 'DELETE'])
+@app.route('/api/login', methods=['POST', 'DELETE'])
 def login():
     if request.method == "POST":
         username = request.json.get('username')
@@ -33,10 +54,10 @@ def login():
         else:
             return Response("Something went wrong!", mimetype="text/html", status=500)
         
-@app.route('/users', methods=['GET', 'POST', 'PATCH', 'DELETE'])
+@app.route('/api/users', methods=['GET', 'POST', 'PATCH', 'DELETE'])
 def users():
     if request.method == 'GET':
-        user_id = request.args.get("user_id")
+        user_id = request.args.get("userId")
         data = userfunction.getUsers(user_id)
         if data != None:
             return Response(json.dumps(data, default=str), mimetype="application/json", status=200)
@@ -63,9 +84,10 @@ def users():
         birthdate = request.json.get('birthdate')
         bio = request.json.get('bio')
         url = request.json.get('url')
-        user_id = request.json.get('user_id')
-        if userfunction.modifyAccount(email, username, password, birthdate, bio, url, user_id):
-            return Response("Modify Succsess!", mimetype="text/html", status=201)
+        user_id = request.json.get('userId')
+        user = userfunction.modifyAccount(email, username, password, birthdate, bio, url, user_id)
+        if user != None:
+            return Response(json.dumps(user, default=str), mimetype="text/html", status=201)
         else:
             return Response("Something went wrong!", mimetype="text/html", status=500)
     elif request.method == "DELETE":
@@ -75,7 +97,7 @@ def users():
         else:
             return Response("Something went wrong!", mimetype="text/html", status=500)
 
-@app.route('/follows', methods=['GET', 'POST', 'DELETE'])
+@app.route('/api/follows', methods=['GET', 'POST', 'DELETE'])
 def follows():
     if request.method == "GET":
         user_id = request.args.get("userId")
@@ -99,7 +121,7 @@ def follows():
         else:
             return Response("Something went wrong!", mimetype="text/html", status=500)
         
-@app.route('/followers', methods=['GET'])
+@app.route('/api/followers', methods=['GET'])
 def followers():
     if request.method == "GET":
         user_id = request.args.get("userId")
@@ -109,12 +131,29 @@ def followers():
         else:
             return Response("Something went wrong!", mimetype="text/html", status=500)
         
-@app.route('/tweets', methods=['GET', 'POST', 'PATCH', 'DELETE'])
+@app.route('/api/follow-tweets', methods=['GET'])
+def follow_tweet():
+    if request.method == "GET":
+        user_id = request.args.get("userId")
+        checkuser_id = request.args.get('checkuserId')
+        print(user_id)
+        tweets = tweetfunction.followTweets(user_id,checkuser_id)
+        if users != None:
+            return Response(json.dumps(tweets, default=str), mimetype="application/json", status=200)
+        else:
+            return Response("Something went wrong!", mimetype="text/html", status=500)
+        
+@app.route('/api/tweets', methods=['GET', 'POST', 'PATCH', 'DELETE'])
 def tweets():
     if request.method == "GET": 
         user_id = request.args.get('userId')
-        tweets = tweetfunction.getTweet(user_id)
-        print(user_id)
+        checkuser_id = request.args.get('checkuserId')
+        index = request.args.get("index")
+        tweet_id = request.args.get("tweetId")
+        if tweet_id != None:
+           tweets = tweetfunction.getOneTweet(tweet_id)
+        else: 
+            tweets = tweetfunction.getTweet(user_id, index, checkuser_id)
         if tweets != None:
             return Response(json.dumps(tweets, default=str), mimetype="application/json", status=200)
         else:
@@ -123,7 +162,8 @@ def tweets():
         token = request.json.get('loginToken')
         content = request.json.get('content')
         image = request.json.get('image')
-        tweet = tweetfunction.postTweet(token, content, image)
+        retweet_id = request.json.get('retweetId')
+        tweet = tweetfunction.postTweet(token, content, image, retweet_id)
         if tweet != None:
             return Response(json.dumps(tweet, default=str), mimetype="application/json", status=201)
         else:
@@ -146,10 +186,11 @@ def tweets():
         else:
             return Response("Something went wrong!", mimetype="text/html", status=500)
             
-@app.route('/likes', methods=['GET', 'POST', 'DELETE'])
+@app.route('/api/likes', methods=['GET', 'POST',"PATCH", 'DELETE'])
 def tweet_likes():
     if request.method == "GET":
         tweet_id = request.args.get('tweetId')
+        # user_id = request.args.get('userId')
         tweet_likes = like.getTweetLikes(tweet_id)
         if tweet_likes != None:
             return Response(json.dumps(tweet_likes, default=str), mimetype="application/json", status=200)
@@ -159,6 +200,14 @@ def tweet_likes():
         token = request.json.get('loginToken')
         tweet_id = request.json.get('tweetId')
         if like.postTweetLike(token, tweet_id):
+            return Response("likes Succsess!", mimetype="text/html", status=201)
+        else:
+            return Response("Something went wrong!", mimetype="text/html", status=500)
+    if request.method == "PATCH":
+        token = request.json.get('loginToken')
+        tweet_id = request.json.get("tweetId")
+        print(tweet_id)
+        if like.editTweetLike(token, tweet_id):
             return Response("Likes Succsess!", mimetype="text/html", status=201)
         else:
             return Response("Something went wrong!", mimetype="text/html", status=500)
@@ -170,11 +219,12 @@ def tweet_likes():
         else:
             return Response("Something went wrong!", mimetype="text/html", status=500)
         
-@app.route('/comments', methods=['GET', 'POST', 'PATCH', 'DELETE'])
+@app.route('/api/comments', methods=['GET', 'POST', 'PATCH', 'DELETE'])
 def comments():
     if request.method == "GET": 
         tweet_id = request.args.get('tweetId')
-        comments = commentsfunction.getComment(tweet_id)
+        user_id = request.args.get('userId')
+        comments = commentsfunction.getComment(tweet_id, user_id)
         if tweets != None:
             return Response(json.dumps(comments, default=str), mimetype="application/json", status=200)
         else:
@@ -207,11 +257,12 @@ def comments():
         else:
             return Response("Something went wrong!", mimetype="text/html", status=500)
         
-@app.route('/com-comments', methods=['GET', 'POST', 'PATCH', 'DELETE'])
+@app.route('/api/com-comments', methods=['GET', 'POST', 'PATCH', 'DELETE'])
 def com_comments():
     if request.method == "GET": 
         comment_id = request.args.get('commentId')
-        comments = commentsfunction.getCom_comment(comment_id)
+        user_id = request.args.get('userId')
+        comments = commentsfunction.getCom_comment(comment_id, user_id)
         if comments != None:
             return Response(json.dumps(comments, default=str), mimetype="application/json", status=200)
         else:
@@ -242,7 +293,7 @@ def com_comments():
         else:
             return Response("Something went wrong!", mimetype="text/html", status=500)
 
-@app.route('/comment-likes', methods=['GET', 'POST', 'DELETE'])
+@app.route('/api/comment-likes', methods=['GET', 'POST', 'DELETE'])
 def comment_likes():
     if request.method == "GET":
         comment_id = request.args.get('commentId')
@@ -266,7 +317,7 @@ def comment_likes():
         else:
             return Response("Something went wrong!", mimetype="text/html", status=500)
         
-@app.route('/com-comment-likes', methods=['GET', 'POST', 'DELETE'])
+@app.route('/api/com-comment-likes', methods=['GET', 'POST', 'DELETE'])
 def com_comment_likes():
     if request.method == "GET":
         com_comment_id = request.args.get('com_commentId')
@@ -290,11 +341,12 @@ def com_comment_likes():
         else:
             return Response("Something went wrong!", mimetype="text/html", status=500)
 
-@app.route('/@', methods=['GET', 'POST', 'DELETE'])
+@app.route('/api/@', methods=['GET', 'POST', 'PATCH'])
 def Auser():    
     if request.method == "GET":
         user_id = request.args.get('userId')
-        tweets = hashA.getTweets(user_id)
+        checkuser_id = request.args.get('checkuserId')
+        tweets = hashA.getTweets(user_id, checkuser_id)
         if tweets != None:
             return Response(json.dumps(tweets, default=str), mimetype="application/json", status=200)
         else:
@@ -302,24 +354,26 @@ def Auser():
     elif request.method == "POST":
         token = request.json.get('loginToken')
         tweet_id = request.json.get('tweetId')
+        at_id = request.json.get('atId')
         print(tweet_id)
-        if hashA.postAuser(token, tweet_id):
+        if hashA.postAuser(token, tweet_id, at_id):
             return Response("@ Succsess!", mimetype="text/html", status=201)
         else:
             return Response("Something went wrong!", mimetype="text/html", status=500)
-    elif request.method == "DELETE":
+    elif request.method == "PATCH":
         token = request.json.get('loginToken')
         tweet_id = request.json.get('tweetId')
-        if hashA.deleteAuser(token, tweet_id):
-            return Response("Delete Succsess!", mimetype="text/html", status=204)
+        if hashA.editAuser(token, tweet_id):
+            return Response("Edit Succsess!", mimetype="text/html", status=204)
         else:
             return Response("Something went wrong!", mimetype="text/html", status=500)
 
-@app.route('/message', methods=['GET', 'POST', 'DELETE'])
+@app.route('/api/message', methods=['GET', 'POST', 'PATCH'])
 def message():
     if request.method == "GET":
         user_id = request.args.get('userId')
-        messages = messagefunction.getmessages(user_id)
+        chatwith_id = request.args.get("chatwithId")
+        messages = messagefunction.getmessages(user_id, chatwith_id)
         if messages != None:
             return Response(json.dumps(messages, default=str), mimetype="application/json", status=200)
         else:
@@ -328,23 +382,44 @@ def message():
         token = request.json.get('loginToken')
         receiver_id = request.json.get('receiverId')
         content = request.json.get('content')
-        if messagefunction.postMessage(token, receiver_id, content):
-            return Response("Send message Succsess!", mimetype="text/html", status=201)
+        print(receiver_id)
+        print(content)
+        message = messagefunction.postMessage(token, receiver_id, content)
+        if message != None:
+            return Response(json.dumps(message, default=str), mimetype="text/html", status=201)
         else:
             return Response("Something went wrong!", mimetype="text/html", status=500)
-    
-          
-@app.route('/hash', methods=['GET', "PATCH", "DELETE"])
+    elif request.method == "PATCH":
+        token = request.json.get('loginToken')
+        message_id = request.json.get('messageId')
+        print(message_id)
+        if messagefunction.editMessage (token, message_id):
+            return Response("Edit Success!", mimetype="text/html", status=201)
+        else:
+            return Response("Something went wrong!", mimetype="text/html", status=500)
+         
+@app.route('/api/hash', methods=['GET',"POST", "PATCH", "DELETE"])
 def hash():
     if request.method == "GET":
         hashTag = request.args.get("hashTag")
+        user_id = request.args.get('userId')
         print(hashTag)
         if hashTag == None:
             hash = hashA.getHash()
         else:
-            hash = hashA.getHashTweet(hashTag)
+            hash = hashA.getHashTweet(hashTag, user_id)
         if hash != None:
             return Response(json.dumps(hash, default=str), mimetype="application/json", status=200)
+        else:
+            return Response("Something went wrong!", mimetype="text/html", status=500)
+    elif request.method == "POST":
+        print("a")
+        token = request.json.get('loginToken')
+        tweet_id = request.json.get('tweetId')
+        hashtag = request.json.get('hash')
+        print(hashtag)
+        if hashA.postHash(token, tweet_id, hashtag):
+             return Response("POST succuss!", mimetype="application/json", status=200)
         else:
             return Response("Something went wrong!", mimetype="text/html", status=500)
     elif request.method == "PATCH":
@@ -365,6 +440,24 @@ def hash():
         else:
             return Response("Something went wrong!", mimetype="text/html", status=500)
         
+@app.route('/api/search', methods=['GET'])
+def search_tweet():
+    if request.method == "GET":
+        searchContent = request.args.get("searchContent")
+        checkuser_id = request.args.get('checkuserId')
+        print(searchContent)
+        tweets = tweetfunction.search(searchContent,checkuser_id)
+        if users != None:
+            return Response(json.dumps(tweets, default=str), mimetype="application/json", status=200)
+        else:
+            return Response("Something went wrong!", mimetype="text/html", status=500)
+        
+
+        
+        
+
+        
+             
 
 
      
