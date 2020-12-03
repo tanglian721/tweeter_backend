@@ -21,8 +21,7 @@ APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 @app.route('/api/upload', methods=["POST"])
 def upload():
-    target = os.path.join(APP_ROOT, '/Users/Taylo/InnoTech/Assignments/Project/tweet_fullStack/frondend/src/assets/')
-    
+    target = os.path.join(APP_ROOT, '/var/www/ltweet/frontend/dist/img')   
     if not os.path.isdir(target):
         os.mkdir(target)
     files = request.files.getlist("file")
@@ -451,6 +450,40 @@ def search_tweet():
             return Response(json.dumps(tweets, default=str), mimetype="application/json", status=200)
         else:
             return Response("Something went wrong!", mimetype="text/html", status=500)
+        
+@app.route('/notice', methods=['PATCH'])
+def notice():
+    if request.method == "PATCH":
+        token = request.json.get('loginToken')
+        following_id = request.json.get('followingId')
+        comment_id = request.json.get('commentId')
+        like_id = request.json.get('likeId')
+        com_comment_id = request.json.get('com_commentId')
+        if following_id != None:
+            print(token)
+            if noticefunction.clearFollowNotice(token, following_id):
+                return Response("clear succuss!", mimetype="application/json", status=200)
+            else:
+                return Response("Something went wrong!", mimetype="text/html", status=500)
+        if comment_id != None:
+            print(token)
+            if noticefunction.clearCommentNotice(token, comment_id):
+                return Response("clear succuss!", mimetype="application/json", status=200)
+            else:
+                return Response("Something went wrong!", mimetype="text/html", status=500)
+        if like_id != None:
+            print(token)
+            if noticefunction.clearLikeNotice(token, like_id):
+                return Response("clear succuss!", mimetype="application/json", status=200)
+            else:
+                return Response("Something went wrong!", mimetype="text/html", status=500)
+        if com_comment_id != None:
+            print(token)
+            if noticefunction.clearNestcommentNotice(token, com_comment_id):
+                return Response("clear succuss!", mimetype="application/json", status=200)
+            else:
+                return Response("Something went wrong!", mimetype="text/html", status=500)
+                
         
 
         
