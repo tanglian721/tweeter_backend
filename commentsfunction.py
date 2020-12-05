@@ -8,7 +8,7 @@ def getComment(tweet_id, user_id):
     try:
         conn = mariadb.connect(user=dbcreds.user, password=dbcreds.password, host=dbcreds.host, port=dbcreds.port, database=dbcreds.database)
         cursor = conn.cursor()
-        cursor.execute("SELECT c.id ,c.tweet_id ,c.user_id ,u.username ,u.url ,c.content ,c.image ,c.created_at FROM users u INNER JOIN comments c ON u.id = c.user_id WHERE c.tweet_id=? ORDER BY c.created_at DESC", [tweet_id])
+        cursor.execute("SELECT c.id ,c.tweet_id ,c.user_id ,u.username ,u.url ,c.content ,c.image ,c.created_at, c.notice FROM users u INNER JOIN comments c ON u.id = c.user_id WHERE c.tweet_id=? ORDER BY c.created_at DESC", [tweet_id])
         rows = cursor.fetchall()
         comments = []
         headers = [ i[0] for i in cursor.description]
@@ -164,7 +164,7 @@ def getCom_comment(comment_id, user_id):
     try:
         conn = mariadb.connect(user=dbcreds.user, password=dbcreds.password, host=dbcreds.host, port=dbcreds.port, database=dbcreds.database)
         cursor = conn.cursor()
-        cursor.execute("SELECT cc.id ,cc.comment_id ,cc.content ,cc.created_at , cc.user_id ,u.username,u.url FROM com_comment cc INNER JOIN users u ON cc.user_id =u.id WHERE cc.comment_id=? ORDER BY cc.created_at DESC" , [comment_id])
+        cursor.execute("SELECT cc.id ,cc.comment_id ,cc.content ,cc.created_at , cc.user_id ,u.username,u.url, cc.notice FROM com_comment cc INNER JOIN users u ON cc.user_id =u.id WHERE cc.comment_id=? ORDER BY cc.created_at DESC" , [comment_id])
         rows = cursor.fetchall()
         comments = []
         headers = [ i[0] for i in cursor.description]
@@ -282,19 +282,12 @@ def deleteCom_comment(token, com_comment_id):
         cursor = conn.cursor()
         cursor.execute("SELECT user_id FROM token WHERE token=?", [token,])
         user_id = cursor.fetchone()[0]
+        print(user_id)
         if user_id != None:
-            cursor.execute("SELECT comment_id FROM com_comment WHERE id = ?", [com_comment_id,])
-            comment_id = cursor.fetchone()[0]
+            print(com_comment_id)
             cursor.execute("DELETE FROM com_comment WHERE user_id=? AND id=?", [user_id, com_comment_id])
-            conn.commit()
-            print("1")
-            cursor.execute("SELECT COUNT(*) FROM com_comment cc WHERE cc.comment_id=?", [comment_id,])
-            amount = cursor.fetchone()[0]
-            print(amount)
-            if amount != None:
-                cursor.execute("UPDATE comments SET com_amount=? WHERE id=?", [amount,comment_id])
-                conn.commit()            
-                row = cursor.rowcount           
+            conn.commit()            
+            row = cursor.rowcount           
     except mariadb.ProgrammingError:
         print("program error...")
     except mariadb.DataError:

@@ -83,15 +83,16 @@ def users():
         birthdate = request.json.get('birthdate')
         bio = request.json.get('bio')
         url = request.json.get('url')
-        user_id = request.json.get('userId')
-        user = userfunction.modifyAccount(email, username, password, birthdate, bio, url, user_id)
+        token = request.json.get('loginToken')
+        user = userfunction.modifyAccount(email, username, password, birthdate, bio, url, token)
         if user != None:
             return Response(json.dumps(user, default=str), mimetype="text/html", status=201)
         else:
             return Response("Something went wrong!", mimetype="text/html", status=500)
     elif request.method == "DELETE":
-        user_id = request.json.get('user_id')
-        if userfunction.deleteAccount(user_id):
+        token = request.json.get('loginToken')
+        password = request.json.get('password')
+        if userfunction.deleteAccount(token, password):
             return Response("Delete Succsess!", mimetype="text/html", status=201)
         else:
             return Response("Something went wrong!", mimetype="text/html", status=500)
@@ -451,7 +452,7 @@ def search_tweet():
         else:
             return Response("Something went wrong!", mimetype="text/html", status=500)
         
-@app.route('/notice', methods=['PATCH'])
+@app.route('/api/notice', methods=['PATCH'])
 def notice():
     if request.method == "PATCH":
         token = request.json.get('loginToken')

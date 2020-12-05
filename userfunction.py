@@ -79,51 +79,56 @@ def signUp(email, username, password, birthdate, bio, date, url):
         else:
             return False
         
-def modifyAccount(email, username, password, birthdate, bio, url, user_id):
+def modifyAccount(email, username, password, birthdate, bio, url, token):
     conn = None
     cursor = None
     row = None
     try:
         conn = mariadb.connect(user=dbcreds.user, password=dbcreds.password, host=dbcreds.host, port=dbcreds.port, database=dbcreds.database)
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM users WHERE id=?", [user_id])
-        row = cursor.fetchone()
-        print('show')
-        print(row)
-        if email != "" and email != None and email != row[1]:
-            print('1')
-            print(email)        
-            cursor.execute("UPDATE users SET email=? WHERE id=?", [email, user_id])
-        if username != "" and username != None and username != row[0]:           
-            print('2')
-            print(username)        
-            cursor.execute("UPDATE users SET username=? WHERE id=?", [username, user_id])
-        if password != "" and password != None and password != row[4]:           
-            print('3')
-            print(password)        
-            cursor.execute("UPDATE users SET password=? WHERE id=?", [password, user_id])
-        if birthdate != "" and birthdate != None and birthdate != row[2]:           
-            print('4')
-            print(birthdate)        
-            cursor.execute("UPDATE users SET birthdate=? WHERE id=?", [birthdate, user_id])
-        if bio != "" and bio != None and bio != row[3]:           
-            print('5')
-            print(bio)        
-            cursor.execute("UPDATE users SET bio=? WHERE id=?", [bio, user_id])
-        if url != "" and url != None and  url != row[7]:           
-            print('6')
-            print(url)        
-            cursor.execute("UPDATE users SET url=? WHERE id=?", [url, user_id])
-        user = {
-            "username" : username,
-            "email" : email,
-            "birthdate" : birthdate,
-            "bio" : bio,
-            "url" : url,
-            "user_id" : user_id,     
-        }
-        conn.commit()
-        row = cursor.rowcount
+        cursor.execute("SELECT user_id FROM token WHERE token=?", [token,])
+        user_id = cursor.fetchone()[0]
+        print(user_id)
+        if user_id != None:
+            cursor.execute("SELECT * FROM users WHERE id=?", [user_id])
+            row = cursor.fetchone()
+            print('show')
+            print(row)
+            if email != "" and email != None and email != row[1]:
+                print('1')
+                print(email)        
+                cursor.execute("UPDATE users SET email=? WHERE id=?", [email, user_id])
+            if username != "" and username != None and username != row[0]:           
+                print('2')
+                print(username)        
+                cursor.execute("UPDATE users SET username=? WHERE id=?", [username, user_id])
+            if password != "" and password != None and password != row[4]:           
+                print('3')
+                print(password)        
+                cursor.execute("UPDATE users SET password=? WHERE id=?", [password, user_id])
+            if birthdate != "" and birthdate != None and birthdate != row[2]:           
+                print('4')
+                print(birthdate)        
+                cursor.execute("UPDATE users SET birthdate=? WHERE id=?", [birthdate, user_id])
+            if bio != "" and bio != None and bio != row[3]:           
+                print('5')
+                print(bio)        
+                cursor.execute("UPDATE users SET bio=? WHERE id=?", [bio, user_id])
+            if url != "" and url != None and  url != row[7]:           
+                print('6')
+                print(url)        
+                cursor.execute("UPDATE users SET url=? WHERE id=?", [url, user_id])
+            user = {
+                "username" : username,
+                "email" : email,
+                "birthdate" : birthdate,
+                "bio" : bio,
+                "url" : url,
+                "user_id" : user_id,     
+            }
+            print(user)
+            conn.commit()
+            row = cursor.rowcount
     except mariadb.ProgrammingError:
         print("program error...")
     except mariadb.DataError:
@@ -138,19 +143,24 @@ def modifyAccount(email, username, password, birthdate, bio, url, user_id):
         if(conn != None):
             conn.rollback()
             conn.close()
-        return   user
+        return user
 
           
-def deleteAccount(user_id):
+def deleteAccount(token, password):
     conn = None
     cursor = None
     row = None
     try:
         conn = mariadb.connect(user=dbcreds.user, password=dbcreds.password, host=dbcreds.host, port=dbcreds.port, database=dbcreds.database)
         cursor = conn.cursor()
-        cursor.execute("DELETE FROM users WHERE id=?", [user_id,])
-        conn.commit()
-        row = cursor.rowcount
+        cursor.execute("SELECT user_id FROM token WHERE token=?", [token,])
+        user_id = cursor.fetchone()[0]
+        print(user_id)
+        if user_id != None:
+            print(password)
+            cursor.execute("DELETE FROM users WHERE id=? ANd password=?", [user_id, password])
+            conn.commit()
+            row = cursor.rowcount
     except mariadb.ProgrammingError:
         print("program error...")
     except mariadb.DataError:
